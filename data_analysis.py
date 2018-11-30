@@ -1,6 +1,12 @@
+import datetime as dt
+import sys
+import os
 import os.path
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_extraction import DictVectorizer
+
 # import matplotlib
 import matplotlib.pyplot as plt
 
@@ -30,13 +36,27 @@ Related Work (Arnav, Tanmay, Cibi)
 
 def pre_processing(data):
     data.rename(columns=lambda x: x.strip(), inplace=True)
+    
     data['deadline'] = pd.to_datetime(data['deadline'], errors='coerce')
+    
     data['launched'] = pd.to_datetime(data['launched'], errors='coerce')
+    
     data['goal'] = pd.to_numeric(data['goal'], errors='coerce')
+    
     data['pledged'] = pd.to_numeric(data['pledged'], errors='coerce')
+    
     data['usd pledged'] = pd.to_numeric(data['usd pledged'], errors='coerce')
+    
     data['backers'] = pd.to_numeric(data['backers'], errors='coerce')
+    
     data.dropna(inplace=True)
+
+    print("these are the different column values")
+    print(data.columns.values)
+    data['Difference'] = (data['deadline'] - data['launched']).dt.days
+    print(data.columns.values)
+    print("the time durations of the projects are ")
+    print(data['Difference'])
 
 
 def visualization(data):
@@ -100,15 +120,58 @@ def visualization(data):
     # pledge_goal_ratio_mc()
     project_outcome()
 
+def label_creator(labels):
+    encoder = LabelEncoder()
+    encoder.fit(labels)
+    
+    return encoder.transform(labels)
 
 def pre_processing_classification(data):
     # Use Label Encoder to encode string data.
+    #excluding "useless" features
+    
+    data = data.drop(['ID','name','currency','launched','deadline','pledged'],axis=1)
+    
+    
+    #creating labels for each of the column headers
+    #string features- features to be converted from strings to integers 
+    
+    
+    string_features = ['category','main_category','country','state']
+    processed_cat = []
+    
+    for feature in string_features:
+        processed_cat.append(exec("label_creator(data."+feature+")"))
+    
+    processed_cat = np.asarray(processed_cat)
+    
+    data = data.drop(string_features,axis=1)
+    
+    data = data.to_dict(orient='records')
+    vec = DictVectorizer()
+    numerical_features = vec.fit_transform(data).toarray()
+    
+    #remember that state is the last value sin 
+    
+    
+    
+    
+    
+    #Using a label encoder 
+    
+    
+    
+    
     pass
 
 
 def main():
     csv_filepath = os.path.join('data', 'ks-projects-201801.csv')
     data = pd.read_csv(csv_filepath, usecols=range(13))
+    print(data.head())
+    print("that was the required value")
+    
+    
     pre_processing(data)
     visualization(data)
     pre_processing_classification(data)
